@@ -1,0 +1,37 @@
+version: "3.2"
+services:
+  mywhs:
+    build: './mywhs/'
+    networks:
+      - backend
+    volumes:
+      - /mywhs_var:/var/www/html/
+      - /mywhs_docker_files:/var/www/html/sites/default/files/
+  apache:
+    build: './apache/'
+    depends_on:
+      - mywhs
+      - mywhs_mysql
+    networks:
+      - frontend
+      - backend
+    ports:
+      - "8090:80"
+    volumes:
+      - /mywhs_var:/var/www/html/
+      - /mywhs_docker_files:/var/www/html/sites/default/files/
+  mywhs_mysql:
+    image: mysql:5.7.29
+    networks:
+      - backend
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql
+      - MYSQL_DATABASE=mywhs
+    volumes:
+      - /mywhs_var/mysql:/var/lib/mysql
+      - /mywhs_docker_var:/var/files
+    ports:
+      - 33062:3306
+networks:
+  frontend:
+  backend:

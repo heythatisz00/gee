@@ -1,0 +1,20 @@
+FROM php:7.3.19-fpm-alpine3.11
+RUN apk update; \
+    apk upgrade;
+RUN docker-php-ext-install pdo_mysql
+
+RUN sed -i 's/9000/8090/' /usr/local/etc/php-fpm.d/zz-docker.conf
+
+RUN apk add --no-cache autoconf
+RUN apk --no-cache add pcre-dev ${PHPIZE_DEPS}
+RUN pecl install xdebug-2.9.6
+RUN docker-php-ext-enable xdebug
+RUN apk del pcre-dev ${PHPIZE_DEPS}
+RUN apk update
+RUN apk add libpng libpng-dev libjpeg-turbo-dev libwebp-dev zlib-dev libxpm-dev gd && docker-php-ext-install gd
+RUN echo "zend_extension=$(find /usr/local/lib/php/extensions/ -name xdebug.so)" > /usr/local/etc/php/conf.d/xdebug.ini \
+&& echo "xdebug.remote_enable=on" >> /usr/local/etc/php/conf.d/xdebug.ini \
+&& echo "xdebug.remote_autostart=on" >> /usr/local/etc/php/conf.d/xdebug.ini \
+&& echo "xdebug.idekey = VSCODE" >> /usr/local/etc/php/conf.d/xdebug.ini\
+&& echo "xdebug.remote_host = localhost" >> /usr/local/etc/php/conf.d/xdebug.ini \
+&& echo "xdebug.remote_port = 9000" >> /usr/local/etc/php/conf.d/xdebug.ini

@@ -1,0 +1,30 @@
+FROM httpd:2.4.33-alpine
+RUN apk update; \
+apk upgrade;
+# Copy apache vhost section to proxy php requests to sapr container
+COPY sapr.apache.conf /usr/local/apache2/conf/sapr.apache.conf
+RUN echo "Include /usr/local/apache2/conf/sapr.apache.conf" \
+>> /usr/local/apache2/conf/httpd.conf
+
+
+vi sapr.apache.conf
+ServerName localhost
+LoadModule deflate_module /usr/local/apache2/modules/mod_deflate.so
+LoadModule proxy_module /usr/local/apache2/modules/mod_proxy.so
+LoadModule proxy_fcgi_module /usr/local/apache2/modules/mod_proxy_fcgi.so
+
+<VirtualHost *:80>
+    # Proxy .php requests to port 8090 of the SAPR container
+    ProxyPassMatch ^/(.*\.php(/.*)?)$ fcgi://localhost:8090/var/www/html/$1
+    DocumentRoot /var/www/html/
+    <Directory /var/www/html/>
+        DirectoryIndex index.php
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    # Send apache logs to stdout and stderr
+    CustomLog /proc/self/fd/1 common
+    ErrorLog /proc/self/fd/2
+</VirtualHost>
